@@ -1,23 +1,29 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import { useKey } from "react-use";
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { Card, CardContent } from "@/components/ui/card"
+import { motion, AnimatePresence } from "framer-motion"
+import { useKey } from "react-use"
 
-interface Anime {
-  id: string;
-  title: string;
-  image?: string;
-  releaseDate?: string;
+interface AnimeResult {
+  mal_id: number
+  title: string
+  images: {
+    jpg: {
+      image_url: string
+    }
+  }
+  aired: {
+    from: string
+  }
 }
 
 interface SearchResultsProps {
-  results: Anime[];
-  onSelect: () => void;
-  isLoading?: boolean;
+  results: AnimeResult[]
+  onSelect: () => void
+  isLoading?: boolean
 }
 
 export function SearchResults({
@@ -25,34 +31,28 @@ export function SearchResults({
   onSelect,
   isLoading,
 }: SearchResultsProps) {
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedIndex, setSelectedIndex] = useState(-1)
 
-  // Reset selected index when results change
   useEffect(() => {
-    setSelectedIndex(-1);
-  }, [results]);
+    setSelectedIndex(-1)
+  }, [results])
 
-  // Keyboard navigation
   useKey("ArrowDown", (e: KeyboardEvent) => {
-    e.preventDefault();
-    setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1));
-  });
+    e.preventDefault()
+    setSelectedIndex((prev) => Math.min(prev + 1, results.length - 1))
+  })
 
   useKey("ArrowUp", (e: KeyboardEvent) => {
-    e.preventDefault();
-    setSelectedIndex((prev) => Math.max(prev - 1, -1));
-  });
+    e.preventDefault()
+    setSelectedIndex((prev) => Math.max(prev - 1, -1))
+  })
 
   useKey("Enter", () => {
     if (selectedIndex >= 0 && results[selectedIndex]) {
-      window.location.href = `/anime/${results[selectedIndex].id}`;
-      onSelect();
+      window.location.href = `/anime/${results[selectedIndex].mal_id}`
+      onSelect()
     }
-  });
-
-  if (results.length === 0 && !isLoading) {
-    return null;
-  }
+  })
 
   return (
     <Card className="absolute top-full w-full mt-2 z-50 max-h-96 overflow-auto shadow-lg">
@@ -65,9 +65,9 @@ export function SearchResults({
             className="p-4 text-center text-muted-foreground"
           >
             <div className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse" />
-              <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse delay-150" />
-              <div className="w-4 h-4 rounded-full bg-primary/20 animate-pulse delay-300" />
+              <div className="w-2 h-2 rounded-full bg-primary/20 animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-primary/20 animate-pulse delay-75" />
+              <div className="w-2 h-2 rounded-full bg-primary/20 animate-pulse delay-150" />
             </div>
           </motion.div>
         ) : results.length === 0 ? (
@@ -87,13 +87,13 @@ export function SearchResults({
           >
             {results.map((anime, index) => (
               <motion.div
-                key={anime.id}
+                key={anime.mal_id}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
                 <Link
-                  href={`/anime/${anime.id}`}
+                  href={`/anime/${anime.mal_id}`}
                   className={`block transition-colors relative ${
                     index === selectedIndex ? "bg-muted" : "hover:bg-muted/50"
                   }`}
@@ -103,9 +103,7 @@ export function SearchResults({
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="relative w-12 h-16 flex-shrink-0 overflow-hidden rounded">
                       <Image
-                        src={
-                          anime.image || "/placeholder.svg?height=64&width=48"
-                        }
+                        src={anime.images.jpg.image_url || "/placeholder.svg?height=64&width=48"}
                         alt={anime.title}
                         fill
                         className="object-cover transition-transform hover:scale-105"
@@ -116,9 +114,9 @@ export function SearchResults({
                       <p className="text-sm font-medium truncate">
                         {anime.title}
                       </p>
-                      {anime.releaseDate && (
+                      {anime.aired.from && (
                         <p className="text-xs text-muted-foreground truncate">
-                          {anime.releaseDate}
+                          {new Date(anime.aired.from).getFullYear()}
                         </p>
                       )}
                     </div>
@@ -137,5 +135,6 @@ export function SearchResults({
         )}
       </AnimatePresence>
     </Card>
-  );
+  )
 }
+

@@ -1,17 +1,16 @@
-// app/page.tsx
 import { AnimeGrid } from "@/components/anime-grid";
-import { HeroSection } from "@/components/hero-section";
+import { FeaturedAnime } from "@/components/featured-anime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Home() {
   return (
     <main className="container mx-auto px-4 py-8 space-y-8">
-      <HeroSection />
+      <FeaturedAnime />
 
       <Tabs defaultValue="trending" className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="trending">Trending Anime</TabsTrigger>
-          <TabsTrigger value="popular">Popular</TabsTrigger>
+          <TabsTrigger value="popular">This season</TabsTrigger>
           <TabsTrigger value="recent">Recent Episodes</TabsTrigger>
         </TabsList>
 

@@ -47,7 +47,7 @@ export function AnimeGrid({ type }: AnimeGridProps) {
             endpoint = "https://api.jikan.moe/v4/top/anime";
             break;
           case "popular":
-            endpoint = "https://api.jikan.moe/v4/anime/popular";
+            endpoint = "https://api.jikan.moe/v4/seasons/now";
             break;
           case "recent":
             endpoint =

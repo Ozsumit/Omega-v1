@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import Image from "next/image"
-import { Card, CardContent } from "@/components/ui/card"
-import { motion } from "framer-motion"
+import Link from "next/link";
+import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 interface SearchResultsProps {
-  results: any[]
-  onSelect: () => void
+  results: any[];
+  onSelect: () => void;
 }
 
 export function SearchResults({ results, onSelect }: SearchResultsProps) {
   if (results.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -41,13 +41,14 @@ export function SearchResults({ results, onSelect }: SearchResultsProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{anime.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{anime.releaseDate}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {anime.releaseDate}
+                </p>
               </div>
             </CardContent>
           </Link>
         </motion.div>
       ))}
     </Card>
-  )
+  );
 }
-

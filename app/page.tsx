@@ -12,6 +12,7 @@ export default function Home() {
           <TabsTrigger value="trending">Trending Anime</TabsTrigger>
           <TabsTrigger value="popular">This season</TabsTrigger>
           <TabsTrigger value="recent">Recent Episodes</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trending" className="mt-6">
@@ -24,6 +25,10 @@ export default function Home() {
 
         <TabsContent value="recent" className="mt-6">
           <AnimeGrid type="recent" />
+        </TabsContent>
+
+        <TabsContent value="schedule" className="mt-6">
+          <AnimeGrid type="schedule" />
         </TabsContent>
       </Tabs>
     </main>

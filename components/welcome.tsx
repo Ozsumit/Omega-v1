@@ -4,7 +4,35 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Star, Info, AlertTriangle, ShieldCheck, X } from "lucide-react";
 import Image from "next/image";
 
-const CharacterImage = ({ pose, images, className }) => {
+interface CharacterImageProps {
+  pose: string;
+  images: Record<string, string>;
+  className?: string;
+}
+
+interface WelcomeModalTriggerProps {
+  children?: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}
+
+interface WelcomeModalProps {
+  onClose: () => void;
+}
+
+interface Section {
+  icon: React.ReactNode;
+  title: string;
+  items: (string | { text: string; url: string })[];
+  characterDialog: string;
+  characterPose: string;
+}
+
+const CharacterImage: React.FC<CharacterImageProps> = ({
+  pose,
+  images,
+  className,
+}) => {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
@@ -15,13 +43,17 @@ const CharacterImage = ({ pose, images, className }) => {
       alt={`Anime character ${pose} pose`}
       className={`transition-opacity duration-300 ${
         isLoading ? "opacity-0" : "opacity-100"
-      } ${className}`}
+      } ${className ?? ""}`}
       onLoad={() => setIsLoading(false)}
     />
   );
 };
 
-export const WelcomeModalTrigger = ({ children, onClick, className = "" }) => {
+export const WelcomeModalTrigger: React.FC<WelcomeModalTriggerProps> = ({
+  children,
+  onClick,
+  className = "",
+}) => {
   return (
     <button
       onClick={onClick}
@@ -33,9 +65,9 @@ export const WelcomeModalTrigger = ({ children, onClick, className = "" }) => {
   );
 };
 
-export const WelcomeModal = ({ onClose }) => {
+export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
   const [currentSection, setCurrentSection] = useState(0);
-  const [characterPose, setCharacterPose] = useState("wave");
+  const [characterPose, setCharacterPose] = useState<string>("wave");
   const CURRENT_VERSION = "1.0.0";
 
   const characterImages = useMemo(
@@ -55,7 +87,7 @@ export const WelcomeModal = ({ onClose }) => {
     []
   );
 
-  const sections = useMemo(
+  const sections: Section[] = useMemo(
     () => [
       {
         icon: <Star className="text-yellow-500 w-6 h-6" />,
@@ -120,10 +152,7 @@ export const WelcomeModal = ({ onClose }) => {
 
   useEffect(() => {
     const idleInterval = startIdleAnimations();
-
-    return () => {
-      clearInterval(idleInterval);
-    };
+    return () => clearInterval(idleInterval);
   }, [startIdleAnimations]);
 
   const handleSectionChange = useCallback(
@@ -134,22 +163,25 @@ export const WelcomeModal = ({ onClose }) => {
     [sections]
   );
 
-  const renderListItem = useCallback((item) => {
-    if (typeof item === "object" && item.url) {
+  const renderListItem = useCallback(
+    (item: string | { text: string; url: string }) => {
+      if (typeof item === "object" && "url" in item) {
+        return (
+          <li key={item.text} className="flex items-center">
+            <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
+            {item.text}
+          </li>
+        );
+      }
       return (
-        <li key={item.text} className="flex items-center">
+        <li key={item} className="flex items-center">
           <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
-          {item.text}
+          {item}
         </li>
       );
-    }
-    return (
-      <li key={item} className="flex items-center">
-        <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
-        {item}
-      </li>
-    );
-  }, []);
+    },
+    []
+  );
 
   return (
     <div

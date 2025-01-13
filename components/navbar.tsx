@@ -15,10 +15,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Search } from "./search";
 
 const navItems = [
-  { href: "https://cmoon.sumit.info.np", label: "Home" },
-  { href: "https://cmoon.sumit.info.np/movie", label: "Movies" },
-  { href: "https://cmoon.sumit.info.np/series", label: "TV" },
-  { href: "/", label: "Anime(β)" },
+  { href: "/", label: "Home" },
+  // { href: "https://cmoon.sumit.info.np/movie", label: "Movies" },
+  // { href: "https://cmoon.sumit.info.np/series", label: "TV" },
+  { href: "https://cmoon.sumit.info.np/series", label: "Cmoon" },
+  // { href: "/", label: "Anime(β)" },
 ];
 
 export function Navbar() {

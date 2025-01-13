@@ -1,53 +1,63 @@
 "use client";
-import { AnimeGrid } from "@/components/anime-grid";
-import { useEffect } from "react";
-import { FeaturedAnime } from "@/components/featured-anime";
-import { ToastWithLink } from "@/components/ui/components_toast-with-link";
+
+import React from "react";
+import { AnimeGrid } from "@/components/AnimeGrid";
+import { FeaturedAnime } from "@/components/FeaturedAnime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import toast from "react-hot-toast";
-const showToast = () => {
-  toast(
-    <ToastWithLink
-      title="Use Hianime "
-      description="I appriciate the thought but i highly recommend using Hianime for the best anime streaming experience."
-      linkText="Go to Hianime"
-      linkHref="https:/hianime.to/home"
-    />
-  );
+import { motion } from "framer-motion";
+import HeroAnimeCarousel from "@/components/top-airing-carousel";
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 },
 };
 
 export default function Home() {
-  useEffect(() => {
-    showToast();
-  }, []);
   return (
-    <main className="container mx-auto px-4 py-8 space-y-8">
-      <FeaturedAnime />
+    <motion.main
+      className="space-y-8 container mx-auto px-4 py-8"
+      initial="initial"
+      animate="animate"
+      variants={{
+        animate: {
+          transition: {
+            staggerChildren: 0.1,
+          },
+        },
+      }}
+    >
+      <motion.div variants={fadeInUp}>
+        <HeroAnimeCarousel />
+        <FeaturedAnime />
+      </motion.div>
 
-      <Tabs defaultValue="trending" className="w-full">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="trending">Trending Anime</TabsTrigger>
-          <TabsTrigger value="popular">This season</TabsTrigger>
-          <TabsTrigger value="recent">Recent Episodes</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-        </TabsList>
+      <motion.div variants={fadeInUp}>
+        <Tabs defaultValue="trending" className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap mb-6">
+            <TabsTrigger value="trending">Trending Anime</TabsTrigger>
+            <TabsTrigger value="popular">Popular This Season</TabsTrigger>
+            <TabsTrigger value="recent">Recent Episodes</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="trending" className="mt-6">
-          <AnimeGrid type="trending" />
-        </TabsContent>
+          <TabsContent value="trending">
+            <AnimeGrid type="trending" />
+          </TabsContent>
 
-        <TabsContent value="popular" className="mt-6">
-          <AnimeGrid type="popular" />
-        </TabsContent>
+          <TabsContent value="popular">
+            <AnimeGrid type="popular" />
+          </TabsContent>
 
-        <TabsContent value="recent" className="mt-6">
-          <AnimeGrid type="recent" />
-        </TabsContent>
+          <TabsContent value="recent">
+            <AnimeGrid type="recent" />
+          </TabsContent>
 
-        <TabsContent value="schedule" className="mt-6">
-          <AnimeGrid type="schedule" />
-        </TabsContent>
-      </Tabs>
-    </main>
+          <TabsContent value="schedule">
+            <AnimeGrid type="schedule" />
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </motion.main>
   );
 }

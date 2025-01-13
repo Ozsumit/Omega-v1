@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface AnimeDetails {
   mal_id: number;
   title: string;
+  title_english: string | null;
   synopsis: string;
   score: number;
   rank: number;
@@ -66,6 +67,10 @@ export default function AnimePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const episodesPerPage = 30;
 
+  const getDisplayTitle = (anime: AnimeDetails) => {
+    return anime.title_english || anime.title;
+  };
+
   const titleToSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -107,6 +112,11 @@ export default function AnimePage() {
         const consumetData = await consumetResponse.json();
         if (Array.isArray(consumetData.episodes)) {
           setEpisodes(consumetData.episodes);
+
+          if (consumetData.episodes.length > 0) {
+            const firstEpisode = consumetData.episodes[0];
+            fetchServers(firstEpisode.id, firstEpisode.number);
+          }
         } else {
           console.warn("No episodes found or invalid format");
           setEpisodes([]);
@@ -177,6 +187,8 @@ export default function AnimePage() {
     return null;
   }
 
+  const displayTitle = getDisplayTitle(anime);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -187,7 +199,7 @@ export default function AnimePage() {
               <div className="relative aspect-[3/4]">
                 <Image
                   src={anime.images.jpg.large_image_url}
-                  alt={anime.title}
+                  alt={displayTitle}
                   fill
                   className="object-cover rounded"
                   sizes="(min-width: 1024px) 300px, 100vw"
@@ -228,12 +240,17 @@ export default function AnimePage() {
                 <div className="text-xs text-muted-foreground">Status</div>
               </div>
             </div>
+            <div className="flex gap-2 flex-wrap">
+              <p className="text-muted-foreground leading-relaxed">
+                {anime.synopsis}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Right side - Details and episodes */}
         <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-6">{anime.title}</h1>
+          <h1 className="text-3xl font-bold mb-6">{displayTitle}</h1>
 
           <Tabs
             value={currentTab}

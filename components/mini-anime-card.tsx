@@ -26,7 +26,7 @@ interface MiniAnimeCardProps {
 export function MiniAnimeCard({ anime }: MiniAnimeCardProps) {
   return (
     <Link href={`/anime/${anime.mal_id}`}>
-      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+      <Card className="h-full overflow-hidden z-[1000] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
         <CardContent className="p-0">
           <div className="relative aspect-w-2 aspect-h-3">
             <Image

@@ -1,6 +1,7 @@
+"use client";
 import { Suspense } from 'react'
 import { Search } from '@/components/search'
-import { MiniAnimeCard } from '@/components/mini-anime-card'
+import { MiniAnimeCard } from '@/components/mini-anime-card2'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 

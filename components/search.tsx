@@ -91,7 +91,7 @@ export function Search() {
   };
 
   return (
-    <div className="relative w-full max-w-lg mx-auto">
+    <div className="relative w-full z-[9999] max-w-lg mx-auto">
       <form onSubmit={handleSubmit} className="relative">
         <Input
           ref={inputRef}
@@ -135,7 +135,7 @@ export function Search() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 z-10 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden"
+            className="absolute top-full left-0 right-0 z-[9999] mt-2 bg-background border rounded-lg shadow-lg overflow-hidden"
           >
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">

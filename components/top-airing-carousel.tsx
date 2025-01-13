@@ -110,7 +110,7 @@ export function HeroAnimeCarousel() {
   if (loading) return <LoadingSkeleton />;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl">
+    <div className="relative w-full z-[50] overflow-hidden rounded-xl">
       <div ref={emblaRef} className="w-full">
         <div className="flex">
           <AnimatePresence mode="wait">

@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { FeaturedAnime } from "@/components/FeaturedAnime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import HeroAnimeCarousel from "@/components/top-airing-carousel";
+import { WelcomeModal, WelcomeModalTrigger } from "@/components/welcome";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -14,9 +15,11 @@ const fadeInUp = {
 };
 
 export default function Home() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <motion.main
-      className="space-y-8 container mx-auto px-4 py-8"
+      className="space-y-8 container mx-auto px-4 py-8 bg-black text-white"
       initial="initial"
       animate="animate"
       variants={{
@@ -29,9 +32,11 @@ export default function Home() {
     >
       <motion.div variants={fadeInUp}>
         <HeroAnimeCarousel />
+        {/* <WelcomeModalTrigger onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+          Open Welcome Guide
+        </WelcomeModalTrigger> */}
         <FeaturedAnime />
       </motion.div>
-
       <motion.div variants={fadeInUp}>
         <Tabs defaultValue="trending" className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap mb-6">
@@ -58,6 +63,8 @@ export default function Home() {
           </TabsContent>
         </Tabs>
       </motion.div>
+      {isModalOpen && <WelcomeModal onClose={() => setIsModalOpen(false)} />}
     </motion.main>
   );
 }
+

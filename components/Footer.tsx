@@ -1,5 +1,7 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { RefreshCw, ExternalLink, Dice1 } from "lucide-react";
+import Link from "next/link";
 
 interface AnimeData {
   mal_id: number;
@@ -17,179 +19,198 @@ interface AnimeData {
 export function Footer() {
   const [seasonalAnime, setSeasonalAnime] = useState<AnimeData[]>([]);
   const [trendingAnime, setTrendingAnime] = useState<AnimeData[]>([]);
-  const [recommendedAnime, setRecommendedAnime] = useState<AnimeData[]>([]);
   const [randomAnime, setRandomAnime] = useState<AnimeData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [live, setLive] = useState<boolean>(true); // For live indicator
+  const [live, setLive] = useState<boolean>(false);
+  const [randomLoading, setRandomLoading] = useState<boolean>(false);
 
-  // Shuffle array function
-  const shuffleArray = (array: AnimeData[]) => {
-    return array.sort(() => Math.random() - 0.5);
-  };
+  const fetchWithRetry = useCallback(async (url: string) => {
+    const maxRetries = 5;
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        return data;
+      } catch (err) {
+        attempts++;
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(attempts * 1000, 5000))
+        );
+      }
+    }
+    throw new Error("Max retries reached");
+  }, []);
 
   useEffect(() => {
     const fetchAnimeData = async () => {
       try {
         setLoading(true);
-        const [seasonalRes, trendingRes, recommendedRes] = await Promise.all([
-          fetch("https://api.jikan.moe/v4/seasons/now?limit=3"),
-          fetch("https://api.jikan.moe/v4/top/anime?limit=3"),
-          fetch("https://api.jikan.moe/v4/anime?genres=1&limit=10"), // Fetch a larger list for shuffling
+        const [seasonalData, trendingData] = await Promise.all([
+          fetchWithRetry("https://api.jikan.moe/v4/seasons/now?limit=3"),
+          fetchWithRetry("https://api.jikan.moe/v4/top/anime?limit=3"),
         ]);
-
-        if (!seasonalRes.ok || !trendingRes.ok || !recommendedRes.ok) {
-          throw new Error("Failed to fetch anime data.");
-        }
-
-        const seasonalData = await seasonalRes.json();
-        const trendingData = await trendingRes.json();
-        const recommendedData = await recommendedRes.json();
 
         setSeasonalAnime(seasonalData.data || []);
         setTrendingAnime(trendingData.data || []);
-        setRecommendedAnime(shuffleArray(recommendedData.data).slice(0, 3)); // Shuffle and pick 3
-        setError(null); // Reset error on success
+        setError(null);
+        setLive(true);
       } catch (err) {
-        setError(
-          "Unable to fetch anime data at the moment. Please try again later."
-        );
-        console.error(err);
+        setError("Unable to fetch anime data.");
+        setLive(false);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAnimeData();
-  }, []);
+  }, [fetchWithRetry]);
 
   const fetchRandomAnime = async () => {
-    setLoading(true);
+    setRandomLoading(true);
     try {
-      const response = await fetch("https://api.jikan.moe/v4/random/anime");
-      const data = await response.json();
+      const data = await fetchWithRetry(
+        "https://api.jikan.moe/v4/random/anime"
+      );
       if (data.data) {
         setRandomAnime(data.data);
         setError(null);
       }
     } catch (err) {
       setError("Unable to fetch random anime.");
-      console.error(err);
     } finally {
-      setLoading(false);
+      setRandomLoading(false);
     }
   };
 
-  const SkeletonLoader = () => (
-    <div className="flex items-center gap-3 bg-zinc-900 p-3 rounded-lg animate-pulse">
-      <div className="w-16 h-20 bg-zinc-800 rounded-lg"></div>
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-zinc-800 rounded"></div>
-        <div className="h-4 bg-zinc-800 rounded w-1/2"></div>
+  const AnimeCard = ({ anime }: { anime: AnimeData }) => (
+    <div className="group border border-zinc-900 hover:border-white/10 bg-black/20 backdrop-blur-sm rounded-lg p-4 transition-all duration-300">
+      <div className="flex gap-6">
+        <div className="relative w-24 h-36 rounded-md overflow-hidden bg-zinc-900">
+          {anime.images?.jpg?.image_url && (
+            <div
+              className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+              style={{
+                backgroundImage: `url(${anime.images.jpg.image_url})`,
+              }}
+            />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white/90 text-lg font-medium leading-tight group-hover:text-white">
+            {anime.title_english || anime.title}
+          </h4>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-white/50 text-sm font-medium">
+              Score: {anime.score}
+            </span>
+            <Link
+              href={`/anime/${anime.mal_id}`}
+              className="text-sm text-white/50 hover:text-green-400 transition-colors flex items-center gap-2 px-4 py-2 rounded-md hover:bg-white/5"
+            >
+              View Details <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
 
-  const AnimeCard = ({
-    anime,
-    className,
-  }: {
-    anime: AnimeData;
-    className?: string;
-  }) => (
-    <a
-      key={anime.mal_id}
-      href={anime.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group flex items-center gap-4 bg-zinc-900 p-4 rounded-lg shadow-lg hover:shadow-xl transition-transform transform hover:scale-105 ${className}`}
-    >
-      <div
-        className="w-16 h-24 bg-cover bg-center rounded-lg"
-        style={{
-          backgroundImage: `url(${anime.images?.jpg?.image_url})`,
-        }}
-      ></div>
-      <div className="flex-1">
-        <h4 className="text-white text-lg font-semibold group-hover:text-green-400 transition-colors">
-          {anime.title_english || anime.title}
-        </h4>
-        <p className="text-yellow-400 text-xs">★ {anime.score}</p>
+  const SkeletonLoader = () => (
+    <div className="border border-zinc-900 bg-black/20 rounded-lg p-4">
+      <div className="flex gap-6">
+        <div className="w-24 h-36 bg-zinc-900/50 rounded-md animate-pulse" />
+        <div className="flex-1 space-y-3">
+          <div className="h-6 bg-zinc-900/50 rounded animate-pulse" />
+          <div className="h-4 bg-zinc-900/50 rounded w-2/3 animate-pulse" />
+          <div className="h-10 bg-zinc-900/50 rounded w-1/2 animate-pulse" />
+        </div>
       </div>
-    </a>
+    </div>
   );
 
   return (
-    <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-800 py-12">
-      <div className="container mx-auto px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Seasonal Anime Section */}
-          <div className="md:col-span-2 relative">
-            <h3 className="font-semibold text-xl text-white mb-6">
-              Currently Airing Anime
-            </h3>
-            <div className="space-y-6">
-              {loading
-                ? Array(3)
-                    .fill(0)
-                    .map((_, index) => <SkeletonLoader key={index} />)
-                : seasonalAnime.length > 0
-                ? seasonalAnime.map((anime) => (
-                    <AnimeCard key={anime.mal_id} anime={anime} />
-                  ))
-                : error && <p className="text-sm text-zinc-500">{error}</p>}
-            </div>
+    <footer className="bg-black border-t border-zinc-900 py-16">
+      <div className="max-w-7xl mx-auto px-6">
+        {error && (
+          <div className="mb-8 px-4 py-3 rounded-lg border border-red-900/50 bg-red-500/5 text-red-500 text-sm">
+            {error}
           </div>
+        )}
 
-          {/* Trending Anime Section */}
-          <div className="md:col-span-2">
-            <h3 className="font-semibold text-xl text-white mb-6">
-              Trending Anime
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <section>
+            <h3 className="text-white/90 text-xl font-medium mb-6 flex items-center gap-3">
+              Currently Airing
+              <span className="text-sm text-white/40 font-normal">
+                This Season
+              </span>
             </h3>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {loading
                 ? Array(3)
                     .fill(0)
                     .map((_, index) => <SkeletonLoader key={index} />)
-                : trendingAnime.length > 0
-                ? trendingAnime.map((anime) => (
+                : seasonalAnime.map((anime) => (
                     <AnimeCard key={anime.mal_id} anime={anime} />
-                  ))
-                : error && <p className="text-sm text-zinc-500">{error}</p>}
+                  ))}
             </div>
-          </div>
+          </section>
+
+          <section>
+            <h3 className="text-white/90 text-xl font-medium mb-6 flex items-center gap-3">
+              Trending Now
+              <span className="text-sm text-green-400 font-normal">Live</span>
+            </h3>
+            <div className="space-y-4">
+              {loading
+                ? Array(3)
+                    .fill(0)
+                    .map((_, index) => <SkeletonLoader key={index} />)
+                : trendingAnime.map((anime) => (
+                    <AnimeCard key={anime.mal_id} anime={anime} />
+                  ))}
+            </div>
+          </section>
         </div>
 
-        {/* Random Anime Selector */}
-        <div className="mt-12 text-center">
+        <div className="mt-16 text-center">
           <button
             onClick={fetchRandomAnime}
-            className="px-6 py-3 bg-transparent text-white border border-white rounded-full hover:bg-white hover:text-zinc-950 transition duration-300 transform hover:scale-105"
+            disabled={randomLoading}
+            className="px-6 py-3 text-sm text-white/90 border border-white/10 rounded-lg hover:bg-white/5 hover:border-white/20 disabled:opacity-50 transition-colors"
           >
-            Random Anime Selector
+            {randomLoading ? (
+              <RefreshCw className="w-5 h-5 inline-block animate-spin mr-2" />
+            ) : (
+              <Dice1 className="w-5 h-5 inline-block mr-2" />
+            )}
+            Random Discovery
           </button>
+
           {randomAnime && (
-            <div className="mt-6">
-              <h3 className="font-semibold text-xl text-white mb-4">
-                Random Anime
-              </h3>
+            <div className="mt-6 max-w-2xl mx-auto">
               <AnimeCard anime={randomAnime} />
             </div>
           )}
         </div>
 
-        {/* Live Indicator */}
-        <div className="absolute top-4 right-4 text-white bg-green-500 py-1 px-3 rounded-full text-sm">
-          {live ? "Live" : "Offline"}
+        <div className="fixed top-6 right-6 flex items-center gap-2 bg-black/90 border border-zinc-900 text-sm px-4 py-2 rounded-lg">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              live ? "bg-green-500" : "bg-red-500"
+            }`}
+          />
+          <span className="text-white/60">{live ? "Live" : "Offline"}</span>
         </div>
 
-        {/* Footer Bottom */}
-        <div className="border-t border-zinc-800 pt-8 mt-12 text-center">
-          <p className="text-sm text-zinc-500">
-            © {new Date().getFullYear()} AnimeHub. All rights reserved.
-          </p>
-          <p className="text-sm text-zinc-500">
-            Built with ❤️ for anime fans • Powered by Jikan API
+        <div className="mt-16 pt-8 border-t border-zinc-900/50 text-center">
+          <p className="text-sm text-white/40">
+            © {new Date().getFullYear()} AnimeHub • Powered by Jikan API
           </p>
         </div>
       </div>

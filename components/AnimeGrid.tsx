@@ -327,6 +327,29 @@ export function AnimeGrid({ type }: AnimeGridProps) {
       setLoading(true);
       setError(null);
 
+      const maxRetries = 5;
+      let attempts = 0;
+
+      const fetchWithRetry = async (url: string) => {
+        while (attempts < maxRetries) {
+          try {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+          } catch (err) {
+            attempts++;
+            console.error(`Attempt ${attempts} failed:`, err);
+            await new Promise((resolve) =>
+              setTimeout(resolve, Math.min(attempts * 1000, 5000))
+            );
+          }
+        }
+        throw new Error("Max retries reached");
+      };
+
       try {
         let url: string;
         switch (type) {
@@ -347,11 +370,7 @@ export function AnimeGrid({ type }: AnimeGridProps) {
             throw new Error("Invalid anime type");
         }
 
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await fetchWithRetry(url);
 
         if (type === "schedule") {
           setScheduleData((prev) => ({
@@ -376,13 +395,12 @@ export function AnimeGrid({ type }: AnimeGridProps) {
   );
 
   useEffect(() => {
-    const delay = retryCount > 0 ? Math.min(retryCount * 1000, 5000) : 0;
-    const timeoutId = setTimeout(() => fetchAnimes(currentDay), delay);
-    return () => clearTimeout(timeoutId);
-  }, [fetchAnimes, retryCount, currentDay]);
+    fetchAnimes(currentDay);
+  }, [fetchAnimes, currentDay]);
 
   const handleRetry = () => {
     setRetryCount((count) => count + 1);
+    fetchAnimes(currentDay);
   };
 
   const getSortableValue = (

@@ -29,6 +29,7 @@ export function Search() {
   const [results, setResults] = useState<AnimeResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -65,9 +66,11 @@ export function Search() {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         resultsRef.current &&
-        !resultsRef.current.contains(event.target as Node)
+        !resultsRef.current.contains(event.target as Node) &&
+        !(event.target as Element)?.closest(".search-trigger")
       ) {
         setIsFocused(false);
+        setIsSearchOpen(false);
       }
     };
 
@@ -90,43 +93,115 @@ export function Search() {
     inputRef.current?.focus();
   };
 
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
   return (
     <div className="relative w-full z-[9999] max-w-lg mx-auto">
-      <form onSubmit={handleSubmit} className="relative">
-        <Input
-          ref={inputRef}
-          type="search"
-          placeholder="Search anime..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          className="w-full pr-20 pl-4 py-2 text-lg rounded-md border-2 border-primary focus:ring-2 focus:ring-primary focus:border-transparent"
-        />
-        {query && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-14 top-1/2 -translate-y-1/2 hover:bg-none"
-            onClick={clearSearch}
+      {/* Mobile search trigger */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="search-trigger md:hidden absolute right-0 top-1/2 -translate-y-1/2"
+        onClick={toggleSearch}
+      >
+        <SearchIcon className="h-5 w-5" />
+        <span className="sr-only">Toggle search</span>
+      </Button>
+
+      {/* Search form */}
+      <AnimatePresence>
+        {(!isSearchOpen ? true : isSearchOpen) && (
+          <motion.form
+            onSubmit={handleSubmit}
+            className="relative hidden md:block"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
           >
-            <X className="h-5 w-5 text-muted-foreground" />
-            <span className="sr-only">Clear search</span>
-          </Button>
+            <Input
+              ref={inputRef}
+              type="search"
+              placeholder="Search anime..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              className="w-full pr-20 pl-4 py-2 text-lg rounded-md border-2 border-primary focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            {query && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-14 top-1/2 -translate-y-1/2 hover:bg-none"
+                onClick={clearSearch}
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
+            <Button
+              type="submit"
+              size="sm"
+              className="absolute right-1 top-1/2 text-white -translate-y-1/2 rounded-full bg-transparent hover:bg-transparent"
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <SearchIcon className="h-5 w-5 bg-none" />
+              )}
+              <span className="sr-only">Search</span>
+            </Button>
+          </motion.form>
         )}
-        <Button
-          type="submit"
-          size="sm"
-          className="absolute right-1 top-1/2 text-white -translate-y-1/2 rounded-full bg-transparent hover:bg-transparent"
-        >
-          {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <SearchIcon className="h-5 w-5 bg-none" />
-          )}
-          <span className="sr-only">Search</span>
-        </Button>
-      </form>
+      </AnimatePresence>
+
+      {/* Mobile search form */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.form
+            onSubmit={handleSubmit}
+            className="md:hidden fixed inset-x-0 top-0 p-4 bg-background border-b"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="relative max-w-lg mx-auto">
+              <Input
+                ref={inputRef}
+                type="search"
+                placeholder="Search anime..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                className="w-full pr-20 pl-4 py-2 text-lg rounded-md border-2 border-primary focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-14 top-1/2 -translate-y-1/2"
+                onClick={() => {
+                  clearSearch();
+                  setIsSearchOpen(false);
+                }}
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+                <span className="sr-only">Close search</span>
+              </Button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+
+      {/* Search results */}
       <AnimatePresence>
         {isFocused && (results.length > 0 || isLoading) && (
           <motion.div
@@ -135,7 +210,9 @@ export function Search() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 right-0 z-[9999] mt-2 bg-background border rounded-lg shadow-lg overflow-hidden"
+            className={`absolute left-0 right-0 z-[9999] mt-2 bg-background border rounded-lg shadow-lg overflow-hidden ${
+              isSearchOpen ? "fixed top-[4.5rem] mx-4" : "top-full"
+            }`}
           >
             {isLoading ? (
               <div className="p-4 text-center text-muted-foreground">

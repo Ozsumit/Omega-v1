@@ -9,8 +9,35 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, ThumbsUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface AnimeReview {
+  user: {
+    username: string;
+    images: {
+      jpg: {
+        image_url: string;
+      };
+    };
+  };
+  review: string;
+  score: number;
+  tags: string[];
+  date: string;
+  reactions: {
+    overall: number;
+  };
+}
+
+interface ReviewsResponse {
+  data: AnimeReview[];
+  pagination: {
+    last_visible_page: number;
+    has_next_page: boolean;
+  };
+}
 
 interface AnimeDetails {
   mal_id: number;
@@ -51,6 +78,10 @@ interface Server {
 }
 
 export default function AnimePage() {
+  const [reviews, setReviews] = useState<AnimeReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+
   const { id } = useParams();
   const [anime, setAnime] = useState<AnimeDetails | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -83,7 +114,34 @@ export default function AnimePage() {
     (currentPage - 1) * episodesPerPage,
     currentPage * episodesPerPage
   );
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!anime?.mal_id) return;
 
+      setReviewsLoading(true);
+      setReviewsError(null);
+
+      try {
+        const response = await fetch(
+          `https://api.jikan.moe/v4/anime/${anime.mal_id}/reviews`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch reviews");
+        }
+        const data: ReviewsResponse = await response.json();
+        setReviews(data.data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviewsError("Failed to load reviews");
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (currentTab === "info") {
+      fetchReviews();
+    }
+  }, [anime?.mal_id, currentTab]);
   useEffect(() => {
     const fetchAnimeData = async () => {
       setLoading(true);
@@ -241,7 +299,7 @@ export default function AnimePage() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed line-clamp-5">
                 {anime.synopsis}
               </p>
             </div>
@@ -285,6 +343,75 @@ export default function AnimePage() {
                   </div>
                 </div>
               )}
+
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Reviews</h2>
+                {reviewsLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  </div>
+                ) : reviewsError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{reviewsError}</AlertDescription>
+                  </Alert>
+                ) : reviews.length === 0 ? (
+                  <p className="text-muted-foreground">No reviews available.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review, index) => (
+                      <Card key={index}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <Avatar>
+                              <AvatarImage
+                                src={review.user.images.jpg.image_url}
+                              />
+                              <AvatarFallback>
+                                {review.user.username[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <p className="font-semibold">
+                                    {review.user.username}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(review.date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary">
+                                    Score: {review.score}/10
+                                  </Badge>
+                                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <ThumbsUp className="w-4 h-4" />
+                                    {review.reactions.overall}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-sm leading-relaxed">
+                                  {review.review.length > 500
+                                    ? `${review.review.slice(0, 500)}...`
+                                    : review.review}
+                                </p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {review.tags.map((tag, tagIndex) => (
+                                    <Badge key={tagIndex} variant="outline">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="episodes">

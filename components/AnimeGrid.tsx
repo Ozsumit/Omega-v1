@@ -94,11 +94,11 @@ const LoadingCard = () => (
 );
 
 const LoadingTimeSlot = () => (
-  <Card className="mb-8">
+  <Card className="bg-zinc-900 border-zinc-800">
     <CardContent className="pt-6">
       <div className="flex items-center gap-3 mb-6">
-        <Skeleton className="w-10 h-10 rounded-full" />
-        <Skeleton className="h-6 w-32" />
+        <Skeleton className="w-10 h-10 rounded-full bg-zinc-800" />
+        <Skeleton className="h-6 w-32 bg-zinc-800" />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
@@ -241,9 +241,11 @@ const ScheduleTimeSlot: React.FC<{ slot: TimeSlot }> = ({ slot }) => (
     </CardContent>
   </Card>
 );
+
 const getPreferredTitle = (anime: AnimeBase): string => {
   return anime.title_english || anime.title_synonyms[0] || anime.title;
 };
+
 const AnimeCard: React.FC<{ anime: AnimeBase }> = ({ anime }) => (
   <motion.div
     layout
@@ -518,14 +520,19 @@ export function AnimeGrid({ type }: AnimeGridProps) {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-          {[...Array(10)].map((_, i) => (
-            <LoadingCard key={i} />
-          ))}
-        </div>
-      </div>
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Skeleton className="w-10 h-10 rounded-full bg-zinc-800" />
+            <Skeleton className="h-6 w-32 bg-zinc-800" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <LoadingCard key={i} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

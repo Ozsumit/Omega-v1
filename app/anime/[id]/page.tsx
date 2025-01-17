@@ -174,10 +174,13 @@ export default function AnimePage() {
           if (consumetData.episodes.length > 0) {
             const firstEpisode = consumetData.episodes[0];
             fetchServers(firstEpisode.id, firstEpisode.number);
+          } else {
+            setError("No episodes found.");
           }
         } else {
           console.warn("No episodes found or invalid format");
           setEpisodes([]);
+          setError("No episodes found or invalid format.");
         }
       } catch (error) {
         console.error("Error fetching data:", error);
